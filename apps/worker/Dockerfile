@@ -1,21 +1,21 @@
 FROM node:20-slim AS base
-
-# Enable pnpm
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
-
-# Set working directory
+COPY . /app
 WORKDIR /app
 
-# Copy the entire repository
-COPY . .
+FROM base AS prod-deps
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
-# Install dependencies and build
-WORKDIR /app/apps/api
-RUN corepack prepare pnpm@latest --activate
-RUN pnpm install --no-frozen-lockfile
+FROM base AS build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm install
 RUN pnpm run build
 
-# Start worker
+FROM base
+COPY --from=prod-deps /app/node_modules /app/node_modules
+COPY --from=build /app /app
+
+WORKDIR /app/apps/api
 CMD ["node", "dist/workers.js"]
