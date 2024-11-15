@@ -2,12 +2,11 @@ FROM node:18
 
 WORKDIR /app
 
-# 复制依赖文件
-COPY package*.json ./
-RUN npm install
-
-# 复制源代码
+# 先复制整个项目
 COPY . .
+
+# 然后再运行 npm install
+RUN npm install
 
 # 设置环境变量
 ENV PORT=3002
