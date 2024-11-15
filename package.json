@@ -1,0 +1,11 @@
+{
+  "name": "firecrawl",
+  "version": "1.0.0",
+  "description": "Firecrawl deployment",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    // 添加您需要的依赖
+  }
+} 
