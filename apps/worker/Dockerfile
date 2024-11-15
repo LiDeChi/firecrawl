@@ -6,15 +6,12 @@ RUN npm install -g pnpm
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY apps/api/package*.json ./
-COPY apps/api/pnpm-lock.yaml ./
+# Copy the entire repository
+COPY . .
 
 # Install dependencies
+WORKDIR /app/apps/api
 RUN pnpm install --frozen-lockfile
-
-# Copy source code
-COPY apps/api/ ./
 
 # Build the application
 RUN pnpm run build
