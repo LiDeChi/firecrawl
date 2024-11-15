@@ -1,35 +1,53 @@
 const express = require('express');
 const app = express();
 
-// 环境变量配置
-const PORT = parseInt(process.env.PORT || '3002', 10);
+// Railway 会自动设置 PORT，我们应该优先使用它
+const PORT = process.env.PORT || 3002;
 const HOST = process.env.HOST || '0.0.0.0';
 
-// 打印环境变量
+// 打印配置信息
 console.log('Starting server with config:', {
   PORT,
   HOST,
-  NODE_ENV: process.env.NODE_ENV
+  NODE_ENV: process.env.NODE_ENV,
+  RAILWAY_ENVIRONMENT: process.env.RAILWAY_ENVIRONMENT
 });
 
 // 基本中间件
 app.use(express.json());
 
-// 请求日志
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  next();
+// 根路由
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Firecrawl API is running',
+    endpoints: {
+      health: '/health',
+      crawl: '/v0/crawl'
+    }
+  });
 });
 
 // 健康检查
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.RAILWAY_ENVIRONMENT || 'development'
+  });
 });
 
 // 爬虫端点
 app.post('/v0/crawl', async (req, res) => {
   try {
     const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'URL is required'
+      });
+    }
+    
     res.json({ 
       status: 'success',
       message: `Received request to crawl: ${url}`,
@@ -44,18 +62,13 @@ app.post('/v0/crawl', async (req, res) => {
   }
 });
 
-// 错误处理
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({
-    status: 'error',
-    message: 'Internal Server Error'
-  });
-});
-
-// 创建服务器实例
+// 创建服务器
 const server = app.listen(PORT, HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
+  console.log('Available endpoints:');
+  console.log('- GET /');
+  console.log('- GET /health');
+  console.log('- POST /v0/crawl');
 });
 
 // 优雅关闭处理
